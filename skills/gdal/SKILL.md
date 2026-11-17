@@ -117,7 +117,7 @@ gdal raster reproject --output-crs=EPSG:32632 -r bilinear --resolution 10,10 in.
 gdal vector reproject --output-crs=EPSG:4326 in.gpkg out.gpkg --overwrite
 ```
 
-`--output-crs` is the 3.13+ spelling; on 3.12 it is rejected, use `--dst-crs` (which also works as a hidden alias in 3.13/3.14). Same for `--input-crs`/`--src-crs`.
+`--output-crs` / `--input-crs` are the 3.13+ spellings; 3.12 rejects them and needs `--dst-crs` / `--src-crs`, which still work as hidden aliases in 3.13/3.14.
 
 ### Clip
 
@@ -160,7 +160,7 @@ gdal vector sql in.gpkg out.gpkg --sql "SELECT * FROM layer WHERE pop > 1000"
 gdal vector sql --update data.gpkg --sql "ALTER TABLE layer ADD COLUMN code STRING(10)"
 gdal vector filter --where='pop > 1000' in.gpkg out.gpkg --overwrite
 gdal vector select in.gpkg out.gpkg --field name,pop   # 3.14+; 3.12/3.13 use --fields
-gdal vector select in.gpkg out.gpkg --field pop --exclude
+gdal vector select in.gpkg out.gpkg --field pop --exclude   # 3.14+; earlier use --fields pop
 ```
 
 ### Rasterize / vectorize
@@ -239,11 +239,11 @@ Load these only when you need the full option list for a specific action:
 
 - `--format` values are driver short names (`GTiff`, `COG`, `GPKG`, `GeoJSON`, `Parquet`, `VRT`, `PNG`, `JPEG`, `NetCDF`, `Zarr`). Run `gdal --drivers` for the full list.
 - `GDALG` is accepted as an output format to write a streamed algorithm definition instead of materializing pixels.
-- `--append` adds the input as a subdataset for rasters (GeoTIFF, GeoPackage) and appends features to an existing layer for vectors; it creates the target if absent.
-- `gdal vector create` (3.13+) builds an empty dataset from `--like`, `--schema`, or `--field NAME:TYPE`; older releases need `gdal vector sql --update` or `convert`.
-- `gdal raster overview add` modifies the dataset in place unless `--external` is given.
-- `gdal raster edit` and `gdal raster overview add/delete/refresh` update files in place — confirm with the user before running them on data they did not ask to modify.
+- `--append` adds the input as a subdataset for rasters (GeoTIFF, GeoPackage) and appends features to an existing layer for vectors. The target must already exist — `--append` does not create it.
+- `gdal vector create` (3.13+) builds an empty dataset from `--like`, `--schema`, or `--field NAME:TYPE`; older releases need `gdal vector sql --update` or `convert`. `--schema` takes a **path to an OGR_SCHEMA JSON file** (inline JSON is rejected with `Cannot open file`), and `--like` prints a spurious `ERROR 3: Cannot open file '<schema json>'` in 3.13/3.14 even though it exits 0 and produces the right dataset.
 - Exit code is 0 on success; warnings are still success. Non-zero means a real error.
+- `gdal raster edit` and `gdal raster overview add/delete/refresh` update files in place — confirm with the user before running them on data they did not ask to modify.
+- `-o` means different things per group: an output dataset everywhere except `gdal crs info`, where `-o/--output-type` selects the CRS representation.
 - Actions added after 3.12: `gdal vector create|update|combine|concave-hull|convex-hull|dissolve|export-schema|rename-layer|sort`, `gdal dataset check`, `gdal dataset identify -o/--detailed`, `gdal driver cog validate`, `gdal driver gpkg validate`, `gdal driver rpftoc create`, `gdal mdim info --summary` (3.13); `gdal vector compare|explode`, `gdal raster shift-longitude`, `gdal crs info`, `gdal mdim reproject|compare|pipeline`, `gdal driver zarr`, `gdal driver icechunk` (3.14). Check `--help` before relying on them.
 - `gdal` is still marked provisional by GDAL, so option names can shift between minor releases — check `--help` on the installed version when a flag is rejected. The `--src-*` / `--dst-*` spellings (`--src-crs`, `--src-nodata`, `--src-min`, `--no-check-srs`, `--src-field-type`, proximity `--nodata`) were renamed to `--input-*` / `--output-*` in 3.13 but are still accepted as hidden aliases in 3.12, 3.13 and 3.14; prefer the new names.
 - The Docker image tracks GDAL master, so its version can be newer than the latest stable release. Run `gdal --version` inside the container before relying on a recently added action.

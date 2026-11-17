@@ -188,12 +188,12 @@ gdal vector rasterize [OPTIONS] <INPUT> <OUTPUT>
 | Action | Key options |
 |--------|-------------|
 | `select` | `--field` (repeatable), `--geometry`, `--geometry-field` (all three 3.14+; 3.12/3.13 spell the field list `--fields`), `--exclude` xor `--ignore-missing-fields`, `--active-layer`, `--output-layer` |
-| `set-field-type` | `--field-name` (required) + `--output-field-type/--field-type` (required); `--input-field-type` (3.13+, 3.12 spells it `--src-field-type`) is declared mutually exclusive with `--field-name`, so in practice only the `--field-name` form works from 3.13 on |
+| `set-field-type` | `--field-name` xor `--input-field-type` (one required; `--input-field-type` is 3.13+, 3.12 spells it `--src-field-type`), `--output-field-type` (required; 3.13+, 3.12 spells it `--dst-field-type`); `--field-type` is an alias in every version |
 | `edit` | `--geometry-type`, `--crs`, `--metadata`, `--unset-metadata`, `--layer-metadata`, `--unset-layer-metadata`, `--unset-fid`, `--active-layer`, `--output-layer` |
 | `concat` | `--mode merge-per-layer-name\|stack\|single`, `--output-layer`, `--source-layer-field-name`, `--source-layer-field-content`, `--field-strategy union\|intersection`, `-s/--input-crs`, `-d/--output-crs` (3.13+; 3.12 spells them `--src-crs` / `--dst-crs`) |
 | `partition` | `--field` (repeatable; required in 3.12, optional from 3.13 on), `--scheme hive\|flat`, `--pattern`, `--feature-limit`, `--max-file-size`, `--omit-partitioned-field` |
 | `index` | `--recursive`, `--filename-filter`, `--location-name`, `--absolute-path`, `--output-crs` (3.13+; 3.12 spells it `--dst-crs`), `--metadata`, `--nln/--output-layer`, `--source-crs-field-name`, `--source-crs-format`, `--source-layer-name`, `--source-layer-index`, `--accept-different-crs`, `--accept-different-schemas`, `--dataset-name-only` |
-| `create` | `-i/--like` xor `--schema` xor `--field NAME:TYPE` (repeatable), `-l`, `--geometry-type`, `--geometry-field`, `--crs`, `--fid`, `--output-layer` |
+| `create` | `-i/--like` xor `--schema <OGR_SCHEMA.json>` xor `--field NAME:TYPE` (repeatable), `-l`, `--geometry-type`, `--geometry-field`, `--crs`, `--fid`, `--output-layer`; `--schema` takes a file path, not inline JSON |
 | `update` | `--input-layer`, `--output-layer`, `--mode merge\|update-only\|append-only`, `--key` (repeatable) |
 | `combine` | `--group-by` (repeatable), `--keep-nested`, `--add-extra-fields no\|sometimes-identical\|always-identical` |
 | `compare` | `--reference <DS>` (required), `--lax-geometry`, `--skip-all-optional`, `--skip-binary`, `--skip-crs`, `--skip-metadata`, `--skip-fid` |
@@ -217,4 +217,4 @@ Subcommands: `average`, `average-distance`, `average-distance-points`, `count`, 
 gdal vector grid invdist points.gpkg dem.tif --zfield=z --size=1000,1000
 ```
 
-Common grid options: `--extent`, `--resolution` xor `--size`, `--ot`, `--crs`, `--bbox`, `-l`, `--sql`, `--zfield`, `--zoffset`, `--zmultiply`, `--power` (2), `--smoothing`, `--radius` xor `--radius1/--radius2`, `--angle`, `--min-points`, `--max-points`, `--min-points-per-quadrant`, `--max-points-per-quadrant`, `--nodata`.
+Common grid options: `--extent`, `--resolution X,Y` xor `--size X,Y` (both take two values), `--ot`, `--crs`, `--bbox`, `-l`, `--sql`, `--zfield`, `--zoffset`, `--zmultiply`, `--power` (2), `--smoothing`, `--radius` xor `--radius1/--radius2`, `--angle`, `--min-points`, `--max-points`, `--min-points-per-quadrant`, `--max-points-per-quadrant`, `--nodata`.

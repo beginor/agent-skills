@@ -22,6 +22,12 @@
   - 修正示例：`vector clip --like-layer` 不能用于单图层 shapefile；reproject 示例补充 3.12 需用 `--dst-crs` 的说明
   - 兼容性下限由 3.11 改为 3.12（3.11 缺 `gdal dataset`、`raster as-features|blend|compare|zonal-stats` 及多数 `vector` 动作）
   - 文档内全部 66 条示例命令在 3.12.4 / 3.13.3 / 3.14.0dev 三个镜像上逐条实测：3.14 全部通过，3.12/3.13 的失败项与文档标注的版本限制完全一致
+  - 第二轮自动化核对：将文档中每个 `--option` 与其所属动作的 `--help` 逐项比对，raster/vector 动作表与 3.14 完全一致，无凭空选项、无遗漏动作
+  - 修正 `raster info` 默认输出（实为 `text`，原写 default JSON 有误）、`raster tile` 用法参数名、`overview delete/refresh` 在 3.13+ 的 `<INPUT>` 参数名
+  - 修正 `--append` 语义：目标必须已存在，不会自动创建（实测报 `No such file or directory`）
+  - 补充 `vector create` 实测坑：`--schema` 只接受 OGR_SCHEMA JSON **文件路径**（内联 JSON 报 `Cannot open file`）；`--like` 在 3.13/3.14 会打印无害的 `ERROR 3: Cannot open file` 但退出码为 0
+  - 补充 `grid --resolution`/`--size` 需两个值、`blend -i/--color-input` 与 `pansharpen -i/--panchromatic` 为必填位置参数、`sozip create --no-paths`
+  - 补充 `-o` 在 `gdal crs info` 中意为 `--output-type`（非输出文件）的提醒
 
 ## 2026-09-09
 

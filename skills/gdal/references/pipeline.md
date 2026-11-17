@@ -68,7 +68,7 @@ gdal read in.tif ! info --of=json
 | `polygonize` | `-b`, `--attribute-name`, `-c`, `--output-layer` |
 | `proximity` | `--ot`, `-b`, `--target-values`, `--distance-units`, `--max-distance`, `--fixed-value`, `--output-nodata` (3.14+; 3.12/3.13 spell it `--nodata`) |
 | `reclassify` | `-m/--mapping` (required), `--keep-color-table` (3.14+), `--ot` |
-| `reproject` | `-s/--input-crs`, `-d/--output-crs` (3.12 spells the long names `--src-crs`/`--dst-crs`), `--like` (3.13+), `-r`, `--resolution`, `--size`, `--bbox`, `--bbox-crs`, `-j`, `--target-aligned-pixels`, `--input-nodata` (3.13+), `--output-nodata` (3.13+), `--add-alpha`, `--wo`, `--to`, `--et`; 3.12 spells the nodata pair `--src-nodata`/`--dst-nodata` |
+| `reproject` | `-s/--input-crs`, `-d/--output-crs` (3.13+; 3.12 spells them `--src-crs`/`--dst-crs`), `--like` (3.13+), `-r`, `--resolution`, `--size`, `--bbox`, `--bbox-crs`, `-j`, `--target-aligned-pixels`, `--input-nodata` (3.13+; 3.12 `--src-nodata`), `--output-nodata` (3.13+; 3.12 `--dst-nodata`), `--add-alpha`, `--wo`, `--to`, `--et` |
 | `resize` | `--resolution` xor `--size`, `-r` |
 | `rgb-to-palette` | `--color-count`, `--color-map`, `--output-nodata` (3.13+), `--no-dither` (3.13+), `--bit-depth` (3.13+) |
 | `roughness` | `-b`, `--no-edges` |
@@ -102,7 +102,7 @@ gdal read in.tif ! info --of=json
 | `combine` | `--group-by` (repeatable), `--keep-nested`, `--add-extra-fields no\|sometimes-identical\|always-identical` (3.13+) |
 | `concave-hull` | `--ratio` (required), `--allow-holes`, `--tight`, `--active-layer`, `--active-geometry` (3.13+) |
 | `convex-hull` | `--active-layer`, `--active-geometry` (3.13+) |
-| `create` | `-o` (required, even as a first step), `-i/--like` xor `--schema` xor `--field`, `-l`, `-f`, `--co`, `--lco`, `--overwrite`, `--update`, `--overwrite-layer`, `--output-layer`, `--geometry-type`, `--geometry-field`, `--crs`, `--fid` (3.13+) |
+| `create` | `-o` (required, even as a first step — and it does write that file), `-i/--like` xor `--schema <OGR_SCHEMA.json>` xor `--field`, `-l`, `-f`, `--co`, `--lco`, `--overwrite`, `--update`, `--overwrite-layer`, `--output-layer`, `--geometry-type`, `--geometry-field`, `--crs`, `--fid` (3.13+) |
 | `dissolve` | `--active-layer`, `--active-geometry` (3.13+) |
 | `edit` | `--active-layer`, `--geometry-type`, `--crs`, `--metadata`, `--unset-metadata`, `--layer-metadata`, `--unset-layer-metadata`, `--unset-fid`, `--output-layer` (3.13+) |
 | `explode` | `--active-layer`, `--field` (repeatable), `--geometry`, `--geometry-field` (repeatable), `--index-field` (3.14+) |
@@ -110,7 +110,7 @@ gdal read in.tif ! info --of=json
 | `export-schema` | `-l`, `-o` (3.14+), `--overwrite` (3.14+) — the step itself is 3.13+ |
 | `external` | `--command` (required), `-f` (3.13+); needs `--config GDAL_ENABLE_EXTERNAL=YES` or the pipeline refuses to run the command |
 | `filter` | `--active-layer`, `--bbox`, `--where`, `--update-extent` (3.13+), `--bbox-crs` (3.14+), `--geometry` (3.14+), `--geometry-crs` (3.14+) |
-| `grid` | `<COMMAND>` (`average`, `invdist`, `linear`, `nearest`, ...) plus `--extent`, `--resolution` xor `--size`, `--zfield`, `--ot`, `--nodata`; the subcommand is spelled `grid <COMMAND>`, not `grid` alone |
+| `grid` | `<COMMAND>` (`average`, `invdist`, `linear`, `nearest`, ...) plus `--extent`, `--resolution X,Y` xor `--size X,Y` (both take two values), `--zfield`, `--ot`, `--nodata`; the subcommand is spelled `grid <COMMAND>`, not `grid` alone |
 | `info` | `-f`, `-l`, `--features` xor `--summary`, `--limit`, `--sql`, `--where`, `--dialect`, `--fid` (3.13+), `--crs-format` (3.13+) |
 | `layer-algebra` | `--operation` (required), `--method` (required), `--input-layer`, `--method-layer`, `--geometry-type`, `--input-field`/`--all-input-field`/`--no-input-field`, `--method-field`/`--all-method-field`/`--no-method-field`, `--input-prefix`, `--method-prefix`, `--output-layer` (3.14+) |
 | `limit` | `--limit` (required), `--active-layer` |
@@ -120,10 +120,10 @@ gdal read in.tif ! info --of=json
 | `partition` | `-o` (required), `--field`, `--scheme`, `--pattern`, `--feature-limit`, `--max-file-size`, `--omit-partitioned-field`, `--skip-errors`; 3.12 requires `--field`, 3.13+ also accepts `--feature-limit`/`--max-file-size` alone |
 | `rasterize` | `-b`, `--burn` xor `-a/--attribute-name` xor `--3d`, `-l` xor `--sql`, `--where`, `--dialect`, `--invert`, `--all-touched`, `--nodata`, `--init`, `--like` (3.14+), `--crs`, `--extent`, `--resolution` xor `--size`, `--tap`, `--ot`, `--optimization`, `--transformer-option` |
 | `rename-layer` | `-l`, `--output-layer`, `--ascii`, `--lower-case`, `--filename-compatible`, `--reserved-characters`, `--replacement-character`, `--max-length` (3.13+) |
-| `reproject` | `-d/--output-crs`, `-s/--input-crs` (3.12 spells the long names `--src-crs` / `--dst-crs`), `--active-layer`; `--output-crs` is required in 3.12/3.13, while 3.14 accepts `--output-crs` or `--like` (3.14+, optionally with `--like-layer`, 3.14+) |
+| `reproject` | `-d/--output-crs`, `-s/--input-crs` (3.13+; 3.12 spells them `--src-crs` / `--dst-crs`), `--active-layer`; the output CRS is required in 3.12/3.13, while 3.14 accepts `--output-crs` or `--like` (3.14+, optionally with `--like-layer`, 3.14+) |
 | `segmentize` | `--max-length` (required), `--active-layer`, `--active-geometry` |
 | `select` | `--field` (repeatable, 3.14+), `--geometry` (3.14+), `--geometry-field` (3.14+), `--active-layer`, `--output-layer`, `--exclude` xor `--ignore-missing-fields`; 3.12/3.13 spell the field list `--fields`, still accepted in 3.14 but deprecated and removed in 3.15 |
-| `set-field-type` | `--field-name` (required) + `--output-field-type/--field-type` (required), `--active-layer`; `--input-field-type` (3.13+, 3.12 spells it `--src-field-type`) is mutually exclusive with `--field-name`, so only the `--field-name` form works from 3.13 on; 3.12 spells the target type `--dst-field-type` |
+| `set-field-type` | `--field-name` xor `--input-field-type` (one required; `--input-field-type` is 3.13+, 3.12 spells it `--src-field-type`), `--output-field-type` (required; 3.13+, 3.12 spells it `--dst-field-type`; `--field-type` is an alias in every version), `--active-layer` |
 | `set-geom-type` | `--active-layer`, `--active-geometry`, `--layer-only` xor `--feature-only`, `--geometry-type`, `--auto` (3.14+), `--multi` xor `--single`, `--linear` xor `--curve`, `--dim`, `--skip` |
 | `simplify` | `--tolerance` (required), `--active-layer`, `--active-geometry` |
 | `simplify-coverage` | `--tolerance` (required), `--active-layer`, `--preserve-boundary` |

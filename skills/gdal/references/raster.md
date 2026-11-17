@@ -62,7 +62,7 @@ Verified against GDAL 3.12.4, 3.13.3 and 3.14.0dev. An option marked **(3.13+)**
 gdal raster info [OPTIONS] <INPUT>
 ```
 
-- `-f, --of, --format json|text` — default JSON (text from 3.12 on the command line)
+- `-f, --of, --format json|text` — default `text`; pass `--of=json` for machine-readable output
 - `--mm, --min-max` — compute min/max
 - `--stats` / `--approx-stats` — full or sampled statistics (mutually exclusive)
 - `--hist` — histogram
@@ -151,8 +151,8 @@ Band-level options `-b/--band`, `--color-interpretation`, `--color-map`, `--scal
 
 ```
 gdal raster overview add     [OPTIONS] <INPUT>
-gdal raster overview delete  [OPTIONS] <DATASET>
-gdal raster overview refresh [OPTIONS] <DATASET>
+gdal raster overview delete  [OPTIONS] <DATASET>   # <INPUT> from 3.13 on
+gdal raster overview refresh [OPTIONS] <DATASET>   # <INPUT> from 3.13 on
 ```
 
 `add`: `--levels 2,4,8` xor `--overview-src`, `--external`, `-r/--resampling` (also `gauss`, `average_magphase`), `--min-size`, `--co`.
@@ -163,7 +163,7 @@ gdal raster overview refresh [OPTIONS] <DATASET>
 ## tile
 
 ```
-gdal raster tile [OPTIONS] <INPUT> <OUTPUT-DIR>
+gdal raster tile [OPTIONS] <INPUT> <OUTPUT>
 ```
 
 - `-f/--format` (default `PNG`), `--co`
@@ -219,8 +219,8 @@ gdal raster tile [OPTIONS] <INPUT> <OUTPUT-DIR>
 | `rgb-to-palette` | `--color-count` (256), `--color-map`, `--output-nodata` (3.13+), `--no-dither` (3.13+), `--bit-depth 5\|8` (3.13+) |
 | `nodata-to-alpha` | `--nodata` (repeatable) |
 | `resize` | `--size width[,height]` or `%` (required) xor `--resolution`, `-r` |
-| `blend` | `--overlay <DS>` (required), `--operator src-over\|hsv-value\|multiply\|screen\|overlay\|hard-light\|darken\|lighten\|color-dodge\|color-burn`, `--opacity` (100) |
-| `pansharpen` | `--spectral <DS>...` (required), `-r` (cubic), `--weights`, `--nodata`, `--bit-depth`, `--spatial-extent-adjustment`, `-j` |
+| `blend` | `-i/--color-input` (positional, required), `--overlay <DS>` (required), `--operator src-over\|hsv-value\|multiply\|screen\|overlay\|hard-light\|darken\|lighten\|color-dodge\|color-burn`, `--opacity` (100) |
+| `pansharpen` | `-i/--panchromatic` (positional, required), `--spectral <DS>...` (required), `-r` (cubic), `--weights`, `--nodata`, `--bit-depth`, `--spatial-extent-adjustment`, `-j` |
 | `update` | `--geometry`, `--geometry-crs`, `-r`, `--no-update-overviews`, `--wo`, `--to`, `--et` |
 | `compare` | `--reference <DS>` (required), `--metric all\|none\|diff\|RMSD\|PSNR` (default `diff`, 3.14+), `--skip-all-optional`, `--skip-binary`, `--skip-crs`, `--skip-geotransform`, `--skip-overview`, `--skip-metadata`, `--skip-rpc`, `--skip-geolocation`, `--skip-subdataset` |
 | `clean-collar` | `--color` (default `black`), `--color-threshold` (15), `--pixel-distance` (2), `--add-alpha`, `--add-mask`, `--algorithm floodfill\|twopasses` |

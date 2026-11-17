@@ -55,7 +55,7 @@ gdal vsi sync -r /data/ /vsis3/bucket/data/ --strategy ETag
 gdal vsi sozip create -i file1.tif -i file2.tif -o archive.zip
 ```
 
-`sozip create` options: `--overwrite`, `-r/--recursive`, `-j/--junk-paths`, `--enable-sozip auto|yes|no`, `--sozip-chunk-size`, `--sozip-min-file-size`, `--content-type`.
+`sozip create` options: `--overwrite`, `-r/--recursive`, `-j/--junk-paths`, `--no-paths`, `--enable-sozip auto|yes|no`, `--sozip-chunk-size`, `--sozip-min-file-size`, `--content-type`.
 
 ## gdal dataset
 
@@ -72,7 +72,7 @@ gdal dataset check  [OPTIONS] <INPUT>                  # --oo, --if
 gdal dataset copy   [OPTIONS] <SOURCE> <DESTINATION>   # --overwrite, -f/--format
 gdal dataset delete [OPTIONS] <FILENAME>...            # -f/--format
 gdal dataset rename [OPTIONS] <SOURCE> <DESTINATION>   # --overwrite, -f/--format
-gdal dataset identify [OPTIONS] <FILENAME>...          # -f json|text, -r, --force-recursive, --report-failures
+gdal dataset identify [OPTIONS] <FILENAME>             # -f json|text, -r, --force-recursive, --report-failures
                                                        # 3.13+ adds -o/--output, --co, --lco, -l/--output-layer, --overwrite, --detailed
 ```
 
