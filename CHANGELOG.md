@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-17
+
+- **gdal**
+  - 新增 gdal skill，覆盖 GDAL 3.11+ 统一命令行：`info` / `convert` / `raster` / `vector` / `pipeline` / `vsi` / `dataset` / `mdim` / `driver`
+  - SKILL.md 提供命令地图、通用选项约定、常见工作流；本地无 gdal 时通过 `ghcr.io/osgeo/gdal:ubuntu-small-latest` 镜像执行
+  - references 下补充 raster、vector、pipeline、vsi-dataset 四份完整选项参考
+  - 选项名统一为 `--input-*` / `--output-*`，并注明旧版 `--src-*` / `--dst-*` 仍作为别名可用
+
 ## 2026-09-09
 
 - **sharp-db**
