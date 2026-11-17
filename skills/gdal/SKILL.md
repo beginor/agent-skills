@@ -1,7 +1,7 @@
 ---
 name: gdal
-description: Process geospatial data with the GDAL 3.11+ unified CLI (`gdal`). Use when the user wants to inspect, convert, reproject, clip, mosaic, tile, rasterize, or run SQL on raster/vector datasets (GeoTIFF, COG, GeoPackage, Shapefile, Parquet, VRT, NetCDF, ...), or chain such steps in a pipeline. Covers `gdal info`, `gdal raster *`, `gdal vector *`, `gdal pipeline`, `gdal vsi`, `gdal dataset`, and `gdal mdim`.
-compatibility: requires GDAL 3.11+ with the unified `gdal` command (3.12 recommended)
+description: Process geospatial data with the GDAL 3.12+ unified CLI (`gdal`). Use when the user wants to inspect, convert, reproject, clip, mosaic, tile, rasterize, or run SQL on raster/vector datasets (GeoTIFF, COG, GeoPackage, Shapefile, Parquet, VRT, NetCDF, ...), or chain such steps in a pipeline. Covers `gdal info`, `gdal raster *`, `gdal vector *`, `gdal pipeline`, `gdal vsi`, `gdal dataset`, `gdal crs`, `gdal mdim`, and `gdal driver`.
+compatibility: requires GDAL 3.12+ with the unified `gdal` command (3.14 recommended; 3.12 lacks `gdal crs`, `gdal dataset check`, `gdal vector create`, `gdal raster shift-longitude` and spells many options `--src-*`/`--dst-*`)
 license: MIT
 ---
 
@@ -50,11 +50,11 @@ The image's default command is `bash -l`, so `--entrypoint sh` (or `--entrypoint
 | `gdal pipeline <steps>` | Chain steps with `!` in one command |
 | `gdal vsi <action>` | Virtual filesystem ops (copy, list, delete, move, sync, sozip) |
 | `gdal dataset <action>` | Dataset-level ops (check, copy, delete, identify, rename) |
-| `gdal mdim <action>` | Multidimensional datasets (info, convert, mosaic, reproject, compare, pipeline) |
+| `gdal mdim <action>` | Multidimensional datasets (info, convert, mosaic; reproject/compare/pipeline are 3.14+) |
 | `gdal crs info <CRS>` | Inspect, validate, or identify a CRS (3.14+) |
 | `gdal driver <name> <action>` | Driver-specific ops (cog, gpkg, gti, openfilegdb, parquet, pdf, zarr, ...) |
 
-Shortcuts: `gdal <FILENAME>` is `gdal info <FILENAME>`; `gdal read <FILENAME> ! ...` is `gdal pipeline <FILENAME> ! ...`.
+Shortcuts: `gdal <FILENAME>` is `gdal info <FILENAME>`; `gdal read <FILENAME> ! ...` is `gdal pipeline read <FILENAME> ! ...`.
 
 Useful discovery commands:
 
@@ -81,8 +81,10 @@ gdal raster convert --json-usage                # machine-readable usage
 - `--like <DATASET>` — use another dataset as a template for bounds/CRS/size.
 - `-r, --resampling` — `nearest|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|max|med|q1|q3|sum`.
 - `--ot, --datatype` — output data type (`Byte|Int16|UInt16|Int32|Float32|Float64|...`).
-- `--input-nodata` / `--output-nodata` — input/output nodata values (older releases: `--src-nodata` / `--dst-nodata`).
-- `-s, --input-crs` / `-d, --output-crs` — CRS for reprojection (older releases: `--src-crs` / `--dst-crs`).
+- `--input-nodata` / `--output-nodata` — input/output nodata values (3.13+; 3.12 spells them `--src-nodata` / `--dst-nodata`).
+- `-s, --input-crs` / `-d, --output-crs` — CRS for reprojection (3.13+; 3.12 spells them `--src-crs` / `--dst-crs`).
+
+Version markers in this skill: **(3.13+)** and **(3.14+)** mean the option or action is absent from earlier releases. Verified against GDAL 3.12.4, 3.13.3 and 3.14.0dev.
 
 ## Common workflows
 
@@ -115,6 +117,8 @@ gdal raster reproject --output-crs=EPSG:32632 -r bilinear --resolution 10,10 in.
 gdal vector reproject --output-crs=EPSG:4326 in.gpkg out.gpkg --overwrite
 ```
 
+`--output-crs` is the 3.13+ spelling; on 3.12 it is rejected, use `--dst-crs` (which also works as a hidden alias in 3.13/3.14). Same for `--input-crs`/`--src-crs`.
+
 ### Clip
 
 ```bash
@@ -122,7 +126,7 @@ gdal raster clip --bbox=2,49,3,50 --bbox-crs=EPSG:4326 in.tif out.tif --overwrit
 gdal raster clip --like=reference.tif in.tif out.tif --overwrite
 gdal raster clip --geometry="POLYGON((2 49,3 49,3 50,2 50,2 49))" in.tif out.tif
 gdal vector clip --bbox=2,49,3,50 --bbox-crs=EPSG:4326 in.gpkg out.gpkg --overwrite
-gdal vector clip --like countries.shp --like-layer France in.gpkg out.gpkg
+gdal vector clip --like countries.gpkg --like-layer France in.gpkg out.gpkg
 ```
 
 `gdal vector filter --bbox` selects features intersecting the box **without** clipping their geometry; use `clip` when geometry must be cut.
@@ -155,7 +159,7 @@ Inputs are named with `NAME=path`; the first unnamed input is `X`. `--calc` is r
 gdal vector sql in.gpkg out.gpkg --sql "SELECT * FROM layer WHERE pop > 1000"
 gdal vector sql --update data.gpkg --sql "ALTER TABLE layer ADD COLUMN code STRING(10)"
 gdal vector filter --where='pop > 1000' in.gpkg out.gpkg --overwrite
-gdal vector select in.gpkg out.gpkg --field name,pop
+gdal vector select in.gpkg out.gpkg --field name,pop   # 3.14+; 3.12/3.13 use --fields
 gdal vector select in.gpkg out.gpkg --field pop --exclude
 ```
 
@@ -163,7 +167,7 @@ gdal vector select in.gpkg out.gpkg --field pop --exclude
 
 ```bash
 gdal vector rasterize --burn 255 --size 1000,1000 -l mask mask.shp mask.tif
-gdal vector rasterize -a ROOF_H --where "class='A'" -l footprints footprints.shp dem.tif
+gdal vector rasterize -a ROOF_H --where "class='A'" -l footprints footprints.shp dem.tif --update
 gdal raster polygonize in.tif out.gpkg
 gdal raster contour dem.tif contours.gpkg --interval 10
 ```
@@ -186,7 +190,7 @@ gdal raster zonal-stats dem.tif stats.gpkg --zones zones.gpkg --stat mean,min,ma
 ```bash
 gdal raster overview add in.tif --levels 2,4,8,16 -r average
 gdal raster overview delete in.tif
-gdal raster shift-longitude global.tif shifted.tif --min-x -180 --max-x 180
+gdal raster shift-longitude global.tif shifted.tif --min-x -180 --max-x 180   # 3.14+
 gdal raster tile in.tif tiles/ --min-zoom 2 --max-zoom 5 --skip-blank
 gdal raster tile --tiling-scheme raster --format COG --tile-size 4096 in.tif tiles/
 ```
@@ -200,7 +204,7 @@ gdal pipeline ! read in.gpkg ! rasterize --size 1000,1000 ! reproject --output-c
 gdal read in.tif ! info --of=json
 ```
 
-First step: `read|calc|concat|mosaic|stack`. Last step: `write|info|tile`. Steps are separated by `!`; the leading `!` is optional. Steps use the same options as their standalone action, minus input/output.
+First step: `read|calc|concat|create|mosaic|stack`. Last step: `write|info|tile|compare|partition|export-schema`. Steps are separated by `!`; the leading `!` is optional. Steps use the same options as their standalone action, minus input/output. `create` as a first step and `export-schema` as a last step need 3.13+; `compare-vector` needs 3.14+; everything else works in 3.12. Step options follow the same version rules as the standalone actions, so `reproject` needs `--dst-crs` on 3.12. The vector `create` step still needs its own `-o`, and the `external` step only runs with `--config GDAL_ENABLE_EXTERNAL=YES`.
 
 ### VSI and dataset management
 
@@ -240,6 +244,6 @@ Load these only when you need the full option list for a specific action:
 - `gdal raster overview add` modifies the dataset in place unless `--external` is given.
 - `gdal raster edit` and `gdal raster overview add/delete/refresh` update files in place — confirm with the user before running them on data they did not ask to modify.
 - Exit code is 0 on success; warnings are still success. Non-zero means a real error.
-- Actions added after 3.12: `gdal vector create|update|combine|compare|concave-hull|convex-hull|dissolve|explode|export-schema|rename-layer|sort`, `gdal dataset check`, `gdal driver cog validate` (3.13); `gdal raster shift-longitude`, `gdal crs info` (3.14). Check `--help` before relying on them.
-- `gdal` is still marked provisional by GDAL, so option names can shift between minor releases — check `--help` on the installed version when a flag is rejected. The `--src-*` / `--dst-*` spellings (`--src-crs`, `--src-nodata`, `--src-min`, ...) are legacy aliases still accepted in 3.14; prefer `--input-*` / `--output-*`.
+- Actions added after 3.12: `gdal vector create|update|combine|concave-hull|convex-hull|dissolve|export-schema|rename-layer|sort`, `gdal dataset check`, `gdal dataset identify -o/--detailed`, `gdal driver cog validate`, `gdal driver gpkg validate`, `gdal driver rpftoc create`, `gdal mdim info --summary` (3.13); `gdal vector compare|explode`, `gdal raster shift-longitude`, `gdal crs info`, `gdal mdim reproject|compare|pipeline`, `gdal driver zarr`, `gdal driver icechunk` (3.14). Check `--help` before relying on them.
+- `gdal` is still marked provisional by GDAL, so option names can shift between minor releases — check `--help` on the installed version when a flag is rejected. The `--src-*` / `--dst-*` spellings (`--src-crs`, `--src-nodata`, `--src-min`, `--no-check-srs`, `--src-field-type`, proximity `--nodata`) were renamed to `--input-*` / `--output-*` in 3.13 but are still accepted as hidden aliases in 3.12, 3.13 and 3.14; prefer the new names.
 - The Docker image tracks GDAL master, so its version can be newer than the latest stable release. Run `gdal --version` inside the container before relying on a recently added action.

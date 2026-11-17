@@ -1,5 +1,7 @@
 # gdal vsi / dataset / crs / mdim / driver
 
+Verified against GDAL 3.12.4, 3.13.3 and 3.14.0dev. An item marked **(3.13+)** or **(3.14+)** does not exist in earlier releases; when it replaced an older spelling, that spelling is given in parentheses.
+
 ## gdal vsi
 
 Virtual filesystem operations. Paths use GDAL VSI prefixes: `/vsimem/`, `/vsizip/`, `/vsitar/`, `/vsigzip/`, `/vsicurl/`, `/vsis3/`, `/vsigs/`, `/vsiaz/`, `/vsioss/`, `/vsihdfs/`, `/vsicrypt/`.
@@ -53,7 +55,7 @@ gdal vsi sync -r /data/ /vsis3/bucket/data/ --strategy ETag
 gdal vsi sozip create -i file1.tif -i file2.tif -o archive.zip
 ```
 
-`sozip create` options: `--overwrite`, `-r/--recursive`, `-j/--junk-paths`, `--enable-sozip auto|yes|no`, `--sozip-chunk-size`.
+`sozip create` options: `--overwrite`, `-r/--recursive`, `-j/--junk-paths`, `--enable-sozip auto|yes|no`, `--sozip-chunk-size`, `--sozip-min-file-size`, `--content-type`.
 
 ## gdal dataset
 
@@ -71,6 +73,7 @@ gdal dataset copy   [OPTIONS] <SOURCE> <DESTINATION>   # --overwrite, -f/--forma
 gdal dataset delete [OPTIONS] <FILENAME>...            # -f/--format
 gdal dataset rename [OPTIONS] <SOURCE> <DESTINATION>   # --overwrite, -f/--format
 gdal dataset identify [OPTIONS] <FILENAME>...          # -f json|text, -r, --force-recursive, --report-failures
+                                                       # 3.13+ adds -o/--output, --co, --lco, -l/--output-layer, --overwrite, --detailed
 ```
 
 ```bash
@@ -112,7 +115,7 @@ Multidimensional (NetCDF, Zarr, HDF, GRIB) datasets.
 gdal mdim info [OPTIONS] <INPUT>
 ```
 
-`--summary`, `--detailed`, `--array <NAME>`, `--limit <N>`, `--array-option KEY=VALUE`, `--stats`, `--oo`, `--if`.
+`--detailed`, `--array <NAME>`, `--limit <N>`, `--array-option KEY=VALUE`, `--stats`, `--oo`, `--if`; `--summary` is 3.13+, `-f/--of/--format json|text` is 3.14+.
 
 `gdal mdim convert`: `--array`, `--array-option`, `--group`, `--subset`, `--scale-axes`, `--strict`.
 `gdal mdim mosaic`: `--array` (repeatable).
@@ -129,19 +132,21 @@ gdal mdim pipeline ! read in.nc ! reproject --output-crs=EPSG:32632 ! write out.
 
 ## gdal driver
 
-Driver-specific operations. The available subcommands depend on which drivers the build includes; run `gdal driver --help` to see them.
+Driver-specific operations. The available subcommands depend on which drivers the build includes; run `gdal driver --help` to see them. The official `ubuntu-small` images ship `gpkg`, `gti`, `openfilegdb` (3.12+), `cog`, `rpftoc` (3.13+) and `zarr`, `icechunk` (3.14+); `parquet` and `pdf` need a build that includes those drivers.
 
 | Driver | Subcommands |
 |--------|-------------|
-| `cog` | `validate` — check a TIFF is a valid Cloud Optimized GeoTIFF |
-| `gpkg` | `validate` — GeoPackage conformance; `repack` — vacuum in place |
+| `cog` | `validate` — check a TIFF is a valid Cloud Optimized GeoTIFF (3.13+) |
+| `gpkg` | `repack` — vacuum in place; `validate` — GeoPackage conformance (3.13+) |
 | `gti` | `create` — build a GDAL Tile Index |
 | `openfilegdb` | `repack` |
 | `parquet` | `create-metadata-file` |
 | `pdf` | `list-layers` |
 | `zarr` | `add-georeferencing-convention` (3.14+) |
 | `icechunk` | `list-branches`, `list-tags` (3.14+) |
-| `rpftoc` | `create` — build an A.TOC index from CADRG frames (3.14+) |
+| `rpftoc` | `create` — build an A.TOC index from CADRG frames (3.13+) |
+
+`gdal driver gti create` gained `--profile`, `--base-url`, `--id-method`, `--id-metadata-item` and `--output-crs` in 3.13; 3.12 spells the CRS option `--dst-crs`.
 
 ```bash
 gdal driver cog validate out.tif

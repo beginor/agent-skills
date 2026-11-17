@@ -1,6 +1,6 @@
 # GDAL
 
-A Claude Code Skill for the GDAL 3.11+ unified `gdal` command line, covering raster, vector, pipeline, VSI, dataset, CRS, driver, and multidimensional workflows.
+A Claude Code Skill for the GDAL 3.12+ unified `gdal` command line, covering raster, vector, pipeline, VSI, dataset, CRS, driver, and multidimensional workflows.
 
 ## What it covers
 
@@ -23,7 +23,7 @@ npx skills add beginor/agent-skills --skill gdal
 
 ## Requirements
 
-GDAL 3.11 or newer with the unified `gdal` command (3.12 recommended). Verify with:
+GDAL 3.12 or newer with the unified `gdal` command (3.14 or newer recommended; the references mark everything that needs 3.13+ or 3.14+). 3.11 and older lack `gdal dataset`, `gdal raster as-features|blend|compare|zonal-stats` and most of the `gdal vector` actions. Verify with:
 
 ```bash
 gdal --version
@@ -64,7 +64,7 @@ gdal driver cog validate out.tif
 
 ## Notes
 
-The `gdal` command is still marked provisional upstream, so option names can change between minor releases. Older releases use `--src-*` / `--dst-*`; current releases prefer `--input-*` / `--output-*`. The legacy spellings are still accepted as aliases:
+The `gdal` command is still marked provisional upstream, so option names can change between minor releases. GDAL 3.12 uses `--src-*` / `--dst-*`; 3.13 renamed them to `--input-*` / `--output-*`. The legacy spellings are still accepted as hidden aliases in 3.12, 3.13 and 3.14:
 
 | Legacy | Preferred |
 |--------|-----------|
@@ -74,10 +74,15 @@ The `gdal` command is still marked provisional upstream, so option names can cha
 | `--dst-nodata` | `--output-nodata` |
 | `--src-min` / `--src-max` | `--input-min` / `--input-max` |
 | `--dst-min` / `--dst-max` | `--output-min` / `--output-max` |
+| `--no-check-srs` | `--no-check-crs` |
+| `--src-field-type` / `--dst-field-type` | `--input-field-type` / `--output-field-type` |
+| `--nodata` (proximity) | `--output-nodata` |
 
 Run `gdal <group> <action> --help` on the installed version when a flag is rejected. The Docker image tracks GDAL master, so its version may be newer than the latest stable release.
 
-Actions added after 3.12 — `gdal vector create|update|combine|compare|concave-hull|convex-hull|dissolve|explode|export-schema|rename-layer|sort`, `gdal dataset check`, `gdal driver cog validate` (3.13); `gdal raster shift-longitude`, `gdal crs info` (3.14) — are marked as such in the references.
+Actions added after 3.12 — `gdal vector create|update|combine|concave-hull|convex-hull|dissolve|export-schema|rename-layer|sort`, `gdal dataset check`, `gdal dataset identify -o/--detailed`, `gdal driver cog validate`, `gdal driver gpkg validate`, `gdal driver rpftoc create`, `gdal mdim info --summary` (3.13); `gdal vector compare|explode`, `gdal raster shift-longitude`, `gdal crs info`, `gdal mdim reproject|compare|pipeline`, `gdal driver zarr`, `gdal driver icechunk` (3.14) — are marked as such in the references, as is every option that changed name or appeared after 3.12.
+
+The references were verified against the `ubuntu-small` images for 3.12.4, 3.13.3 and 3.14.0dev by diffing `--help` output for every group and action.
 
 ## License
 

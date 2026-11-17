@@ -3,7 +3,7 @@
 ## 2026-11-17
 
 - **gdal**
-  - 新增 gdal skill，覆盖 GDAL 3.11+ 统一命令行：`info` / `convert` / `raster` / `vector` / `pipeline` / `vsi` / `dataset` / `crs` / `mdim` / `driver`
+  - 新增 gdal skill，覆盖 GDAL 3.12+ 统一命令行：`info` / `convert` / `raster` / `vector` / `pipeline` / `vsi` / `dataset` / `crs` / `mdim` / `driver`
   - SKILL.md 提供命令地图、通用选项约定、常见工作流；本地无 gdal 时通过 `ghcr.io/osgeo/gdal:ubuntu-small-latest` 镜像执行
   - references 下补充 raster、vector、pipeline、vsi-dataset 四份完整选项参考
   - 选项名统一为 `--input-*` / `--output-*`，并注明旧版 `--src-*` / `--dst-*` 仍作为别名可用
@@ -12,6 +12,16 @@
   - 修正失效示例：`vector rasterize` 新建栅格需 `--size`/`--resolution` 且不能用 `-b`；`vector select` 改用 `--field`
   - 补全 pipeline 步骤表（as-features、contour、footprint、pixel-info、polygonize、shift-longitude、zonal-stats、grid、layer-algebra、rasterize、info-raster/info-vector、compare-vector 等）
   - 补全 `gdal driver` 子命令（cog/gpkg/gti/openfilegdb/parquet/pdf/zarr/icechunk/rpftoc）与 `gdal mdim` 的 reproject/compare/pipeline
+  - 复核版本标注：`vector compare`/`explode` 与 `driver rpftoc create` 的引入版本；修正 pipeline 步骤约束（`calc`/`create` 可重复、`compare` 仅栅格）与 `set-field-type`、`vector reproject` 的互斥关系
+  - 对照 3.12.4 / 3.13.3 / 3.14.0dev 三个官方镜像逐项比对 `--help`，为所有跨版本不兼容的动作与选项加上 `(3.13+)` / `(3.14+)` 标注，并注明旧拼写：`--src-*`/`--dst-*` → `--input-*`/`--output-*`（3.13）、`--no-check-srs` → `--no-check-crs`（3.13）、`--fields` → `--field`（3.14）、`proximity --nodata` → `--output-nodata`（3.14）等
+  - 修正 `vector export-schema` 的 `-o`/`--overwrite`（3.14+）、`raster create --resolution`（3.14+）、`vector info --update`（仅 3.12）、`driver gpkg validate` 与 `driver gti create` 的新增选项版本
+  - 修正 pipeline 步骤表：`clean-collar`/`compare-vector`/`explode`/`layer-algebra`/`shift-longitude` 为 3.14+，`as-features`/`create`/`external`/`pixel-info`/`sort`/`update` 等为 3.13+；`compare` 的 `--skip-*` 展开为完整列表
+  - 三镜像实测复核后修正误标：`raster clean-collar` 的选项、`as-features --output-layer`、`raster update --et`、`reproject -s/-d` 在 3.12 已存在，去掉错误的版本标注；`overview add` 的 `-i` 各版本均有，仅 `delete`/`refresh` 的 `-i` 为 3.13+
+  - 修正 `vector sql` 输入参数（`--input` 各版本均有，`--dataset` 为 3.13+ 别名）、`vector reproject` 必填项（3.12/3.13 必填 `--output-crs`，3.14 可用 `--like`）、`set-field-type` 实际约束（3.13+ 必须用 `--field-name`，`--input-field-type` 与之互斥）
+  - 补充实测发现的约束：`vector partition` 在 3.12 必填 `--field`；pipeline 的 `create` 步骤需自带 `-o`，`update` 步骤要求目标已存在，`external` 步骤需 `--config GDAL_ENABLE_EXTERNAL=YES`
+  - 修正示例：`vector clip --like-layer` 不能用于单图层 shapefile；reproject 示例补充 3.12 需用 `--dst-crs` 的说明
+  - 兼容性下限由 3.11 改为 3.12（3.11 缺 `gdal dataset`、`raster as-features|blend|compare|zonal-stats` 及多数 `vector` 动作）
+  - 文档内全部 66 条示例命令在 3.12.4 / 3.13.3 / 3.14.0dev 三个镜像上逐条实测：3.14 全部通过，3.12/3.13 的失败项与文档标注的版本限制完全一致
 
 ## 2026-09-09
 
