@@ -42,6 +42,7 @@ All actions accept the common options `-h/--help`, `--json-usage`, `--config KEY
 | `scale` | Scale band values |
 | `select` | Select bands |
 | `set-type` | Change data type |
+| `shift-longitude` | Shift longitude range (e.g. 0-360 → -180-180) |
 | `sieve` | Remove small polygons |
 | `slope` | Slope map |
 | `stack` | Combine bands into multi-band output |
@@ -88,6 +89,7 @@ gdal raster reproject [OPTIONS] <INPUT> <OUTPUT>
 ```
 
 - `-s, --input-crs` / `-d, --output-crs`
+- `--like <DATASET>` — template for target bounds, CRS, size and nodata
 - `-r, --resampling` (default `nearest`)
 - `--resolution xres,yres` xor `--size width,height`
 - `--bbox`, `--bbox-crs`, `--target-aligned-pixels`
@@ -114,7 +116,7 @@ gdal raster calc [OPTIONS] <INPUTS>... <OUTPUT>
 - `--calc <EXPR>` (required, repeatable — one band per expression)
 - `--dialect muparser|builtin` (default `muparser`)
 - `--flatten` — one band per expression even for multiband input
-- `--ot`, `--nodata`, `--propagate-nodata`, `--no-check-srs`, `--no-check-extent`
+- `--ot`, `--nodata`, `--propagate-nodata`, `--no-check-crs`, `--no-check-extent`
 
 ## mosaic / stack
 
@@ -137,7 +139,7 @@ gdal raster stack  [OPTIONS] <INPUT>... <OUTPUT>
 gdal raster edit [OPTIONS] <DATASET>
 ```
 
-In-place unless `--auxiliary`. Options: `--crs`, `--bbox`, `--nodata`, `--metadata KEY=VALUE`, `--unset-metadata`, `--unset-metadata-domain`, `--gcp pixel,line,x,y[,z]` or `@file`, `--stats`, `--approx-stats`, `--hist`.
+In-place unless `--auxiliary`. Options: `-b/--band`, `--crs`, `--bbox`, `--nodata`, `--color-interpretation`, `--color-map`, `--scale`, `--offset`, `--metadata KEY=VALUE`, `--unset-metadata`, `--unset-metadata-domain`, `--unset-color-table`, `--gcp pixel,line,x,y[,z]` or `@file`, `--stats`, `--approx-stats`, `--hist`.
 
 ## overview
 
@@ -147,7 +149,7 @@ gdal raster overview delete  [OPTIONS] <DATASET>
 gdal raster overview refresh [OPTIONS] <DATASET>
 ```
 
-`add`: `--levels 2,4,8` xor `--overview-src`, `--external`, `-r/--resampling`, `--min-size`, `--co`.
+`add`: `--levels 2,4,8` xor `--overview-src`, `--external`, `-r/--resampling` (also `gauss`, `average_magphase`), `--min-size`, `--co`.
 `delete`: `--external`.
 `refresh`: `--external`, `-r`, `--levels`, `--bbox` xor `--like` xor `--use-source-timestamp`.
 
@@ -163,8 +165,10 @@ gdal raster tile [OPTIONS] <INPUT> <OUTPUT-DIR>
 - `-r/--resampling` (default `cubic`), `--overview-resampling`
 - `--convention xyz|tms`, `--tile-size`, `--add-alpha`/`--no-alpha`, `--output-nodata`
 - `--skip-blank`, `--resume`, `--kml`, `--aux-xml`, `--copy-src-metadata`, `--metadata`
+- `--no-intersection-ok` — downgrade "extent outside tile matrix" to a warning
 - `-j/--num-threads`, `--parallel-method thread|spawn|fork`
-- `--webviewer none|all|leaflet|openlayers|mapml|stac`, `--url`, `--title`, `--copyright`
+- `--excluded-values`, `--excluded-values-pct-threshold` (50), `--nodata-values-pct-threshold` (100)
+- `--webviewer none|all|leaflet|openlayers|mapml|stac` (default `all`), `--url`, `--title`, `--copyright`, `--mapml-template`
 
 ## Terrain and analysis
 
@@ -175,9 +179,9 @@ gdal raster tile [OPTIONS] <INPUT> <OUTPUT-DIR>
 | `aspect` | `-b`, `--convention azimuth\|trigonometric-angle`, `--gradient-alg`, `--zero-for-flat`, `--no-edges` |
 | `tpi` / `roughness` | `-b`, `--no-edges` |
 | `tri` | `-b`, `--algorithm Riley\|Wilson`, `--no-edges` |
-| `viewshed` | `-p/--pos X,Y[,H]`, `-z/--height`, `--target-height`, `--mode normal\|DEM\|ground\|cumulative`, `--max-distance`, `--min-distance`, `--start-angle`, `--end-angle`, `--high-pitch`, `--low-pitch`, `--curvature-coefficient`, `-b`, `--visible-value` (255), `--invisible-value` (0), `--out-of-range-value`, `--output-nodata`, `--observer-spacing`, `-j` |
-| `zonal-stats` | `--zones <DS>` (required), `--zones-band` xor `--zones-layer`, `--stat <STAT>` (required, repeatable), `--weights`, `--pixels default\|fractional\|all-touched`, `--include-field`, `--strategy feature\|raster`, `--chunk-size` |
-| `proximity` | `--ot`, `-b`, `--target-values`, `--distance-units pixel\|geo`, `--max-distance`, `--fixed-value`, `--nodata` |
+| `viewshed` | `-p/--pos X,Y[,H]`, `-z/--height`, `--sd-filename`, `--target-height`, `--mode normal\|DEM\|ground\|cumulative`, `--max-distance`, `--min-distance`, `--start-angle`, `--end-angle`, `--high-pitch`, `--low-pitch`, `--curvature-coefficient`, `-b`, `--visible-value` (255), `--invisible-value` (0), `--maybe-visible-value` (2), `--out-of-range-value`, `--output-nodata`, `--observer-spacing`, `-j` |
+| `zonal-stats` | `--zones <DS>` (required), `--zones-band` xor `--zones-layer`, `--stat <STAT>` (required, repeatable), `--weights`, `--weights-band`, `--pixels default\|fractional\|all-touched`, `--include-field`, `--include-geom`, `--strategy feature\|raster`, `--chunk-size` |
+| `proximity` | `--ot` (Float32), `-b`, `--target-values`, `--distance-units pixel\|geo`, `--max-distance`, `--fixed-value`, `--output-nodata` |
 | `neighbors` | `-b`, `--method mean\|sum\|min\|max\|stddev\|median\|mode`, `--size`, `--kernel` (required), `--ot`, `--nodata` |
 | `fill-nodata` | `-b`, `-d/--max-distance` (100), `-s/--smoothing-iterations`, `--mask`, `--strategy invdist\|nearest` |
 | `sieve` | `--mask`, `-b`, `-s/--size-threshold` (2), `-c/--connect-diagonal-pixels` |
@@ -189,30 +193,31 @@ gdal raster tile [OPTIONS] <INPUT> <OUTPUT-DIR>
 | Action | Key options |
 |--------|-------------|
 | `polygonize` | `-b` (1), `--attribute-name` (DN), `-c/--connect-diagonal-pixels`, `--output-layer` |
-| `contour` | `-b`, `--interval` xor `--levels` xor `-e/--exp-base`, `--off/--offset`, `--elevation-name`, `--min-name`, `--max-name`, `--3d`, `--input-nodata`, `-p/--polygonize` |
-| `footprint` | `-b`, `--combine-bands union\|intersection`, `--overview` xor `--input-nodata`, `--coordinate-system georeferenced\|pixel`, `--output-crs`, `--split-multipolygons`, `--convex-hull`, `--densify-distance`, `--simplify-tolerance`, `--min-ring-area`, `--max-points` (100), `--location-field` (location), `--no-location-field`, `--absolute-path` |
-| `index` | `--recursive`, `--filename-filter`, `--min-pixel-size`, `--max-pixel-size`, `--location-name`, `--output-crs`, `--source-crs-field-name`, `--source-crs-format auto\|WKT\|EPSG\|PROJ`, `--skip-errors` |
-| `as-features` | `-b`, `--geometry-type none\|point\|polygon`, `--skip-nodata`, `--include-xy`, `--include-row-col` |
-| `pixel-info` | `-p/--pos col,line` or `X,Y` (repeatable), `-b`, `--overview`, `--position-crs` (default `pixel`), `-r`, `-f geojson\|csv` |
+| `contour` | `-b`, `--interval` xor `--levels` xor `-e/--exp-base`, `--off/--offset`, `--elevation-name`, `--min-name`, `--max-name`, `--3d`, `--input-nodata`, `-p/--polygonize`, `--group-transactions`, `--output-layer` |
+| `footprint` | `-b`, `--combine-bands union\|intersection`, `--overview` xor `--input-nodata`, `--coordinate-system georeferenced\|pixel`, `--output-crs`, `--split-multipolygons`, `--convex-hull`, `--densify-distance`, `--simplify-tolerance`, `--min-ring-area`, `--max-points` (100), `--location-field` (location), `--no-location-field`, `--absolute-path`, `--output-layer` (footprint) |
+| `index` | `--recursive`, `--filename-filter`, `--min-pixel-size`, `--max-pixel-size`, `--location-name`, `--absolute-path`, `--output-crs`, `--metadata`, `--nln/--output-layer`, `--source-crs-field-name`, `--source-crs-format auto\|WKT\|EPSG\|PROJ`, `--profile none\|STAC-GeoParquet`, `--base-url`, `--id-method`, `--id-metadata-item`, `--skip-errors` |
+| `as-features` | `-b`, `--geometry-type none\|point\|polygon`, `--skip-nodata`, `--include-xy`, `--include-row-col`, `--output-layer` |
+| `pixel-info` | `-p/--pos col,line` or `X,Y` (repeatable), `--position-dataset`, `-l`, `-o/--output`, `-b`, `--overview`, `--position-crs` (default `pixel`), `-r`, `--promote-pixel-value-to-z`, `--include-field` |
 
 ## Band manipulation
 
 | Action | Key options |
 |--------|-------------|
-| `select` | `-b, --band` (required, repeatable; `mask` / `mask:<band>`), `--mask` |
+| `select` | `-b, --band` (required, repeatable; `mask` / `mask:<band>` / color interpretation such as `red`), `--exclude`, `--mask` |
 | `set-type` | `--ot` (required) |
 | `scale` | `-b`, `--input-min`, `--input-max`, `--output-min`, `--output-max`, `--exponent`, `--no-clip`, `--ot` |
 | `unscale` | `--ot` |
-| `reclassify` | `-m/--mapping` (required, `@file` allowed), `--ot` |
+| `reclassify` | `-m/--mapping` (required, `@file` allowed), `--keep-color-table`, `--ot` |
 | `color-map` | `-b`, `--color-map <FILE>`, `--add-alpha`, `--color-selection interpolate\|exact\|nearest` |
-| `rgb-to-palette` | `--color-count` (256), `--color-map`, `--output-nodata`, `--no-dither`, `--bit-depth` |
+| `rgb-to-palette` | `--color-count` (256), `--color-map`, `--output-nodata`, `--no-dither`, `--bit-depth 5\|8` |
 | `nodata-to-alpha` | `--nodata` (repeatable) |
 | `resize` | `--size width[,height]` or `%` (required) xor `--resolution`, `-r` |
-| `blend` | `--overlay <DS>` (required), `--operator src-over\|hsv-value`, `--opacity` (100) |
+| `blend` | `--overlay <DS>` (required), `--operator src-over\|hsv-value\|multiply\|screen\|overlay\|hard-light\|darken\|lighten\|color-dodge\|color-burn`, `--opacity` (100) |
 | `pansharpen` | `--spectral <DS>...` (required), `-r` (cubic), `--weights`, `--nodata`, `--bit-depth`, `--spatial-extent-adjustment`, `-j` |
 | `update` | `--geometry`, `--geometry-crs`, `-r`, `--no-update-overviews`, `--wo`, `--to`, `--et` |
-| `compare` | `--reference <DS>` (required), `--skip-all-optional`, `--skip-binary`, `--skip-crs`, `--skip-geotransform`, `--skip-overview`, `--skip-metadata`, `--skip-rpc`, `--skip-geolocation`, `--skip-subdataset` |
-| `clean-collar` | `-i` required, `-o` optional |
+| `compare` | `--reference <DS>` (required), `--metric all\|none\|diff\|RMSD\|PSNR` (default `diff`), `--skip-all-optional`, `--skip-binary`, `--skip-crs`, `--skip-geotransform`, `--skip-overview`, `--skip-metadata`, `--skip-rpc`, `--skip-geolocation`, `--skip-subdataset` |
+| `clean-collar` | `--color` (default `black`), `--color-threshold` (15), `--pixel-distance` (2), `--add-alpha`, `--add-mask`, `--algorithm floodfill\|twopasses` |
+| `shift-longitude` | `--min-x` (required), `--max-x` (required), `--output-nodata` |
 
 ## create
 
@@ -220,7 +225,7 @@ gdal raster tile [OPTIONS] <INPUT> <OUTPUT-DIR>
 gdal raster create [OPTIONS] <OUTPUT>
 ```
 
-`-f`, `-i/--like`, `--size`, `--band-count` (1), `--ot` (Byte), `--nodata`, `--burn` (repeatable), `--crs`, `--bbox`, `--metadata`, `--copy-metadata`, `--copy-overviews`.
+`-f`, `-i/--like`, `--size` xor `--resolution`, `--band-count` (1), `--ot` (Byte), `--nodata`, `--burn` (repeatable), `--crs`, `--bbox`, `--metadata`, `--copy-metadata`, `--copy-overviews`.
 
 ```bash
 gdal raster create --size 1000,1000 --band-count 3 --ot Byte --burn 0 --crs EPSG:4326 --bbox 2,49,3,50 blank.tif

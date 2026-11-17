@@ -1,4 +1,4 @@
-# gdal vsi / dataset / mdim / driver
+# gdal vsi / dataset / crs / mdim / driver
 
 ## gdal vsi
 
@@ -59,12 +59,14 @@ gdal vsi sozip create -i file1.tif -i file2.tif -o archive.zip
 
 | Subcommand | Aliases | Purpose |
 |------------|---------|---------|
+| `check` | — | Report read errors in a dataset (3.13+) |
 | `copy` | `cp` | Copy all files of a dataset |
 | `delete` | `rm`, `remove` | Delete dataset(s) |
 | `identify` | — | Report the driver that opens a file |
 | `rename` | `ren`, `mv` | Rename dataset files |
 
 ```
+gdal dataset check  [OPTIONS] <INPUT>                  # --oo, --if
 gdal dataset copy   [OPTIONS] <SOURCE> <DESTINATION>   # --overwrite, -f/--format
 gdal dataset delete [OPTIONS] <FILENAME>...            # -f/--format
 gdal dataset rename [OPTIONS] <SOURCE> <DESTINATION>   # --overwrite, -f/--format
@@ -74,7 +76,23 @@ gdal dataset identify [OPTIONS] <FILENAME>...          # -f json|text, -r, --for
 ```bash
 gdal dataset identify data.tif
 gdal dataset identify /data --recursive --of=json
+gdal dataset check data.tif
 gdal dataset copy data.tif backup.tif --overwrite
+```
+
+## gdal crs
+
+CRS inspection (3.14+).
+
+```
+gdal crs info [OPTIONS] <INPUT-CRS>
+```
+
+`-s/--input-crs` (required), `--validate`, `-i/--identify` (search matching EPSG codes), `--single-line`, `-o/--output-type default|all|wkt_all|wkt|projjson|proj4|wkt1|wkt_esri|wkt2|mapinfo|xml`.
+
+```bash
+gdal crs info EPSG:32632 --output-type projjson
+gdal crs info "+proj=longlat +datum=WGS84" --identify --validate
 ```
 
 ## gdal mdim
@@ -86,32 +104,48 @@ Multidimensional (NetCDF, Zarr, HDF, GRIB) datasets.
 | `info` | Information on arrays, dimensions, attributes |
 | `convert` | Convert multidimensional dataset |
 | `mosaic` | Mosaic multidimensional datasets |
+| `reproject` | Reproject a multidimensional dataset (3.14+) |
+| `compare` | Compare two multidimensional datasets (3.14+) |
+| `pipeline` | Chain `read\|mosaic ! ... ! info\|write` steps (3.14+) |
 
 ```
 gdal mdim info [OPTIONS] <INPUT>
 ```
 
-`--detailed`, `--array <NAME>`, `--limit <N>`, `--array-option KEY=VALUE`, `--stats`, `--oo`, `--if`.
+`--summary`, `--detailed`, `--array <NAME>`, `--limit <N>`, `--array-option KEY=VALUE`, `--stats`, `--oo`, `--if`.
+
+`gdal mdim convert`: `--array`, `--array-option`, `--group`, `--subset`, `--scale-axes`, `--strict`.
+`gdal mdim mosaic`: `--array` (repeatable).
+`gdal mdim reproject`: `-d/--output-crs`, `-r/--resampling`.
+`gdal mdim compare`: `--reference` (required), `--metric all|none|diff|RMSD|PSNR`, `--array`, `--skip-binary`.
 
 `gdal mdim --drivers` lists multidimensional drivers as JSON.
 
 ```bash
 gdal mdim info data.nc --detailed
 gdal mdim info data.nc --array temperature --stats
+gdal mdim pipeline ! read in.nc ! reproject --output-crs=EPSG:32632 ! write out.nc --overwrite
 ```
 
 ## gdal driver
 
-Driver-specific operations.
+Driver-specific operations. The available subcommands depend on which drivers the build includes; run `gdal driver --help` to see them.
 
-| Subcommand | Purpose |
-|------------|---------|
-| `gpkg` | GeoPackage driver operations |
-| `gti` | GTI (GDAL Tile Index) driver operations |
-| `openfilegdb` | OpenFileGDB driver operations |
-| `pdf` | PDF driver operations |
+| Driver | Subcommands |
+|--------|-------------|
+| `cog` | `validate` — check a TIFF is a valid Cloud Optimized GeoTIFF |
+| `gpkg` | `validate` — GeoPackage conformance; `repack` — vacuum in place |
+| `gti` | `create` — build a GDAL Tile Index |
+| `openfilegdb` | `repack` |
+| `parquet` | `create-metadata-file` |
+| `pdf` | `list-layers` |
+| `zarr` | `add-georeferencing-convention` (3.14+) |
+| `icechunk` | `list-branches`, `list-tags` (3.14+) |
+| `rpftoc` | `create` — build an A.TOC index from CADRG frames (3.14+) |
 
 ```bash
-gdal driver gpkg --help
-gdal driver pdf --help
+gdal driver cog validate out.tif
+gdal driver gpkg validate data.gpkg
+gdal driver gpkg repack data.gpkg
+gdal driver gti create tiles/ index.gti.gpkg
 ```

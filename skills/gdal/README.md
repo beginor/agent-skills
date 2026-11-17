@@ -1,6 +1,6 @@
 # GDAL
 
-A Claude Code Skill for the GDAL 3.11+ unified `gdal` command line, covering raster, vector, pipeline, VSI, dataset, and multidimensional workflows.
+A Claude Code Skill for the GDAL 3.11+ unified `gdal` command line, covering raster, vector, pipeline, VSI, dataset, CRS, driver, and multidimensional workflows.
 
 ## What it covers
 
@@ -13,6 +13,7 @@ A Claude Code Skill for the GDAL 3.11+ unified `gdal` command line, covering ras
 - **Terrain analysis**: hillshade, slope, aspect, TPI, TRI, roughness, viewshed, zonal stats
 - **Pipelines** that chain steps with `!` and avoid intermediate files
 - **VSI** operations over `/vsicurl/`, `/vsis3/`, `/vsizip/`, and other virtual filesystems
+- **CRS and driver checks**: `gdal crs info`, `gdal dataset check`, `gdal driver cog validate`, `gdal driver gpkg validate`
 
 ## Installation
 
@@ -45,7 +46,7 @@ skills/gdal/
     ├── raster.md                # Every `gdal raster` action with options
     ├── vector.md                # Every `gdal vector` action with options
     ├── pipeline.md              # Raster and vector pipeline steps
-    └── vsi-dataset.md           # vsi, dataset, mdim, driver groups
+    └── vsi-dataset.md           # vsi, dataset, crs, mdim, driver groups
 ```
 
 ## Usage examples
@@ -57,6 +58,8 @@ gdal raster reproject --output-crs=EPSG:3857 in.tif out.tif --overwrite
 gdal raster mosaic tiles/*.tif mosaic.tif --resolution highest
 gdal vector clip --bbox=2,49,3,50 --bbox-crs=EPSG:4326 in.gpkg out.gpkg
 gdal pipeline ! read in.tif ! footprint ! buffer 20 ! write out.gpkg --overwrite
+gdal crs info EPSG:32632 --output-type projjson
+gdal driver cog validate out.tif
 ```
 
 ## Notes
@@ -73,6 +76,8 @@ The `gdal` command is still marked provisional upstream, so option names can cha
 | `--dst-min` / `--dst-max` | `--output-min` / `--output-max` |
 
 Run `gdal <group> <action> --help` on the installed version when a flag is rejected. The Docker image tracks GDAL master, so its version may be newer than the latest stable release.
+
+Actions added after 3.12 — `gdal vector create|update|combine|compare|concave-hull|convex-hull|dissolve|explode|export-schema|rename-layer|sort`, `gdal dataset check`, `gdal driver cog validate` (3.13); `gdal raster shift-longitude`, `gdal crs info` (3.14) — are marked as such in the references.
 
 ## License
 

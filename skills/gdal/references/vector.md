@@ -25,10 +25,18 @@ Actions that process features also accept `--active-layer` and often `--active-g
 | `check-geometry` | Find invalid geometries |
 | `clean-coverage` | Remove gaps/overlaps between polygons |
 | `clip` | Clip to bbox/geometry/like |
+| `combine` | Combine features into collections |
+| `compare` | Compare two datasets |
 | `concat` | Concatenate datasets |
+| `concave-hull` | Concave hull of geometries |
 | `convert` | Convert format |
+| `convex-hull` | Convex hull of geometries |
+| `create` | Create an empty dataset |
+| `dissolve` | Dissolve multipart features |
 | `edit` | Edit dataset/layer metadata |
+| `explode` | Explode fields or geometries |
 | `explode-collections` | Explode collection geometries |
+| `export-schema` | Export `OGR_SCHEMA` |
 | `filter` | Filter by bbox / WHERE |
 | `grid` | Interpolate scattered points to a grid |
 | `index` | Vector tile index |
@@ -39,6 +47,7 @@ Actions that process features also accept `--active-layer` and often `--active-g
 | `partition` | Split into multiple files |
 | `pipeline` | Multi-step pipeline |
 | `rasterize` | Burn geometries into a raster |
+| `rename-layer` | Rename layers |
 | `reproject` | Reproject |
 | `segmentize` | Densify segments |
 | `select` | Select/exclude fields |
@@ -46,10 +55,12 @@ Actions that process features also accept `--active-layer` and often `--active-g
 | `set-geom-type` | Change geometry type |
 | `simplify` | Simplify geometries |
 | `simplify-coverage` | Simplify shared boundaries |
+| `sort` | Spatially order features |
 | `sql` | Apply SQL statements |
 | `swap-xy` | Swap X and Y |
+| `update` | Update a dataset from another one |
 
-There is no `create` action in GDAL 3.12; use `sql --update` or write through `convert`.
+`create`, `update`, `combine`, `compare`, `concave-hull`, `convex-hull`, `dissolve`, `explode`, `export-schema`, `rename-layer`, and `sort` need GDAL 3.13+.
 
 ## info
 
@@ -62,8 +73,10 @@ gdal vector info [OPTIONS] <INPUT>...
 - `--features` xor `--summary`
 - `--limit <N>` — implies `--features`
 - `--sql <stmt>|@file` (conflicts with `--input-layer`)
-- `--where <expr>|@file`, `--dialect`, `--update`
+- `--where <expr>|@file`, `--dialect`, `--fid`
 - `--crs-format AUTO|WKT2|PROJJSON` (text output only)
+
+There is no `--update` option: use `gdal vector sql --update` to modify a dataset in place.
 
 ## convert
 
@@ -95,6 +108,8 @@ gdal vector filter [OPTIONS] <INPUT> <OUTPUT>
 ```
 
 - `--bbox xmin,ymin,xmax,ymax` — selects intersecting features, does **not** clip geometry
+- `--geometry` / `--geometry-crs` — same, with an arbitrary geometry
+- `--bbox-crs` — CRS of the filter box
 - `--where <expr>|@file`
 - `--update-extent`, `--active-layer`
 
@@ -104,7 +119,7 @@ gdal vector filter [OPTIONS] <INPUT> <OUTPUT>
 gdal vector reproject [OPTIONS] <INPUT> <OUTPUT>
 ```
 
-`-s/--input-crs`, `-d/--output-crs`, `-l`, `--active-layer`, `--skip-errors`.
+`-s/--input-crs`, `-d/--output-crs`, `--like <DS>` xor `--like-layer`, `-l`, `--active-layer`, `--skip-errors`.
 
 ## sql
 
@@ -134,8 +149,11 @@ gdal vector rasterize [OPTIONS] <INPUT> <OUTPUT>
 - `-l/--input-layer` xor `--sql`; `--where`, `--dialect`
 - `--invert`, `--all-touched`, `--add`
 - `--nodata`, `--init`, `--crs`, `--ot`
+- `--like <DS>` — template for bounds, CRS and resolution
 - `--extent xmin,ymin,xmax,ymax`, `--resolution` xor `--size`, `--tap/--target-aligned-pixels`
 - `--optimization AUTO|RASTER|VECTOR`, `--transformer-option`, `--update`
+
+`-b` only works when updating an existing raster; a new output needs `--size` or `--resolution`.
 
 ## Geometry operations
 
@@ -164,12 +182,23 @@ gdal vector rasterize [OPTIONS] <INPUT> <OUTPUT>
 
 | Action | Key options |
 |--------|-------------|
-| `select` | `--fields` (required, repeatable), `--exclude` xor `--ignore-missing-fields` |
-| `set-field-type` | `--field-name` xor `--src-field-type`, `--dst-field-type/--field-type` (required) |
-| `edit` | `--geometry-type`, `--crs`, `--metadata`, `--unset-metadata`, `--layer-metadata`, `--unset-layer-metadata`, `--unset-fid` |
+| `select` | `--field` (repeatable), `--geometry`, `--geometry-field`, `--exclude` xor `--ignore-missing-fields`, `--active-layer`, `--output-layer` |
+| `set-field-type` | `--field-name` (required), `--input-field-type` (required), `--output-field-type/--field-type` (required) |
+| `edit` | `--geometry-type`, `--crs`, `--metadata`, `--unset-metadata`, `--layer-metadata`, `--unset-layer-metadata`, `--unset-fid`, `--active-layer`, `--output-layer` |
 | `concat` | `--mode merge-per-layer-name\|stack\|single`, `--output-layer`, `--source-layer-field-name`, `--source-layer-field-content`, `--field-strategy union\|intersection`, `-s/--input-crs`, `-d/--output-crs` |
 | `partition` | `--field` (required, repeatable), `--scheme hive\|flat`, `--pattern`, `--feature-limit`, `--max-file-size`, `--omit-partitioned-field` |
-| `index` | `--recursive`, `--filename-filter`, `--location-name`, `--output-crs`, `--source-crs-field-name`, `--source-crs-format`, `--source-layer-name`, `--source-layer-index`, `--accept-different-crs`, `--accept-different-schemas`, `--dataset-name-only` |
+| `index` | `--recursive`, `--filename-filter`, `--location-name`, `--absolute-path`, `--output-crs`, `--metadata`, `--nln/--output-layer`, `--source-crs-field-name`, `--source-crs-format`, `--source-layer-name`, `--source-layer-index`, `--accept-different-crs`, `--accept-different-schemas`, `--dataset-name-only` |
+| `create` | `-i/--like` xor `--schema` xor `--field NAME:TYPE` (repeatable), `-l`, `--geometry-type`, `--geometry-field`, `--crs`, `--fid`, `--output-layer` |
+| `update` | `--input-layer`, `--output-layer`, `--mode merge\|update-only\|append-only`, `--key` (repeatable) |
+| `combine` | `--group-by` (repeatable), `--keep-nested`, `--add-extra-fields no\|sometimes-identical\|always-identical` |
+| `compare` | `--reference <DS>` (required), `--lax-geometry`, `--skip-all-optional`, `--skip-binary`, `--skip-crs`, `--skip-metadata`, `--skip-fid` |
+| `concave-hull` | `--ratio` (required), `--allow-holes`, `--tight` |
+| `convex-hull` | `--active-layer`, `--active-geometry` |
+| `dissolve` | `--active-layer`, `--active-geometry` |
+| `explode` | `--field` (repeatable), `--geometry`, `--geometry-field` (repeatable), `--index-field` |
+| `export-schema` | `-l`, `-o` (stdout when omitted), `--overwrite` |
+| `rename-layer` | `-l/--input-layer`, `--output-layer`, `--ascii`, `--lower-case`, `--filename-compatible`, `--reserved-characters`, `--replacement-character`, `--max-length` |
+| `sort` | `--geometry-field`, `--method hilbert\|strtree`, `--use-tempfile` |
 
 ## grid
 

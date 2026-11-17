@@ -49,9 +49,10 @@ The image's default command is `bash -l`, so `--entrypoint sh` (or `--entrypoint
 | `gdal vector <action>` | Vector processing (convert, clip, filter, reproject, sql, rasterize, ...) |
 | `gdal pipeline <steps>` | Chain steps with `!` in one command |
 | `gdal vsi <action>` | Virtual filesystem ops (copy, list, delete, move, sync, sozip) |
-| `gdal dataset <action>` | Dataset-level ops (copy, delete, identify, rename) |
-| `gdal mdim <action>` | Multidimensional datasets (info, convert, mosaic) |
-| `gdal driver <name>` | Driver-specific ops (gpkg, gti, openfilegdb, pdf) |
+| `gdal dataset <action>` | Dataset-level ops (check, copy, delete, identify, rename) |
+| `gdal mdim <action>` | Multidimensional datasets (info, convert, mosaic, reproject, compare, pipeline) |
+| `gdal crs info <CRS>` | Inspect, validate, or identify a CRS (3.14+) |
+| `gdal driver <name> <action>` | Driver-specific ops (cog, gpkg, gti, openfilegdb, parquet, pdf, zarr, ...) |
 
 Shortcuts: `gdal <FILENAME>` is `gdal info <FILENAME>`; `gdal read <FILENAME> ! ...` is `gdal pipeline <FILENAME> ! ...`.
 
@@ -94,6 +95,7 @@ gdal raster info data.tif --stats --hist        # force statistics + histogram
 gdal vector info data.gpkg --summary            # layer names + geometry types
 gdal vector info data.gpkg --features --limit 5 # first 5 features
 gdal vector info data.gpkg --sql "SELECT count(*) FROM layer"
+gdal crs info EPSG:32632 --identify --output-type projjson
 ```
 
 ### Convert / optimize
@@ -153,14 +155,14 @@ Inputs are named with `NAME=path`; the first unnamed input is `X`. `--calc` is r
 gdal vector sql in.gpkg out.gpkg --sql "SELECT * FROM layer WHERE pop > 1000"
 gdal vector sql --update data.gpkg --sql "ALTER TABLE layer ADD COLUMN code STRING(10)"
 gdal vector filter --where='pop > 1000' in.gpkg out.gpkg --overwrite
-gdal vector select in.gpkg out.gpkg --fields name,pop
-gdal vector select in.gpkg out.gpkg --fields geom --exclude
+gdal vector select in.gpkg out.gpkg --field name,pop
+gdal vector select in.gpkg out.gpkg --field pop --exclude
 ```
 
 ### Rasterize / vectorize
 
 ```bash
-gdal vector rasterize -b 1,2,3 --burn 255,0,0 -l mask mask.shp work.tif
+gdal vector rasterize --burn 255 --size 1000,1000 -l mask mask.shp mask.tif
 gdal vector rasterize -a ROOF_H --where "class='A'" -l footprints footprints.shp dem.tif
 gdal raster polygonize in.tif out.gpkg
 gdal raster contour dem.tif contours.gpkg --interval 10
@@ -184,6 +186,7 @@ gdal raster zonal-stats dem.tif stats.gpkg --zones zones.gpkg --stat mean,min,ma
 ```bash
 gdal raster overview add in.tif --levels 2,4,8,16 -r average
 gdal raster overview delete in.tif
+gdal raster shift-longitude global.tif shifted.tif --min-x -180 --max-x 180
 gdal raster tile in.tif tiles/ --min-zoom 2 --max-zoom 5 --skip-blank
 gdal raster tile --tiling-scheme raster --format COG --tile-size 4096 in.tif tiles/
 ```
@@ -217,7 +220,7 @@ Load these only when you need the full option list for a specific action:
 - `references/raster.md` — every `gdal raster` action with options
 - `references/vector.md` — every `gdal vector` action with options
 - `references/pipeline.md` — pipeline steps for raster and vector
-- `references/vsi-dataset.md` — `vsi`, `dataset`, `mdim`, `driver` groups
+- `references/vsi-dataset.md` — `vsi`, `dataset`, `crs`, `mdim`, `driver` groups
 
 ## Workflow
 
@@ -232,10 +235,11 @@ Load these only when you need the full option list for a specific action:
 
 - `--format` values are driver short names (`GTiff`, `COG`, `GPKG`, `GeoJSON`, `Parquet`, `VRT`, `PNG`, `JPEG`, `NetCDF`, `Zarr`). Run `gdal --drivers` for the full list.
 - `GDALG` is accepted as an output format to write a streamed algorithm definition instead of materializing pixels.
-- `--append` works for drivers that support subdatasets (GeoTIFF, GeoPackage) and creates the target if absent.
-- `gdal vector` has no `create` action; use `gdal vector sql --update` or write via `convert`/`sql`.
+- `--append` adds the input as a subdataset for rasters (GeoTIFF, GeoPackage) and appends features to an existing layer for vectors; it creates the target if absent.
+- `gdal vector create` (3.13+) builds an empty dataset from `--like`, `--schema`, or `--field NAME:TYPE`; older releases need `gdal vector sql --update` or `convert`.
 - `gdal raster overview add` modifies the dataset in place unless `--external` is given.
 - `gdal raster edit` and `gdal raster overview add/delete/refresh` update files in place — confirm with the user before running them on data they did not ask to modify.
 - Exit code is 0 on success; warnings are still success. Non-zero means a real error.
+- Actions added after 3.12: `gdal vector create|update|combine|compare|concave-hull|convex-hull|dissolve|explode|export-schema|rename-layer|sort`, `gdal dataset check`, `gdal driver cog validate` (3.13); `gdal raster shift-longitude`, `gdal crs info` (3.14). Check `--help` before relying on them.
 - `gdal` is still marked provisional by GDAL, so option names can shift between minor releases — check `--help` on the installed version when a flag is rejected. The `--src-*` / `--dst-*` spellings (`--src-crs`, `--src-nodata`, `--src-min`, ...) are legacy aliases still accepted in 3.14; prefer `--input-*` / `--output-*`.
 - The Docker image tracks GDAL master, so its version can be newer than the latest stable release. Run `gdal --version` inside the container before relying on a recently added action.

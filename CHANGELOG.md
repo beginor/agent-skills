@@ -3,10 +3,15 @@
 ## 2026-11-17
 
 - **gdal**
-  - 新增 gdal skill，覆盖 GDAL 3.11+ 统一命令行：`info` / `convert` / `raster` / `vector` / `pipeline` / `vsi` / `dataset` / `mdim` / `driver`
+  - 新增 gdal skill，覆盖 GDAL 3.11+ 统一命令行：`info` / `convert` / `raster` / `vector` / `pipeline` / `vsi` / `dataset` / `crs` / `mdim` / `driver`
   - SKILL.md 提供命令地图、通用选项约定、常见工作流；本地无 gdal 时通过 `ghcr.io/osgeo/gdal:ubuntu-small-latest` 镜像执行
   - references 下补充 raster、vector、pipeline、vsi-dataset 四份完整选项参考
   - 选项名统一为 `--input-*` / `--output-*`，并注明旧版 `--src-*` / `--dst-*` 仍作为别名可用
+  - 对照 GDAL 3.14 实测补漏：新增 `gdal crs info`、`gdal raster shift-longitude`、`gdal dataset check`，补全 `gdal vector` 的 create/update/combine/compare/dissolve/explode/export-schema/rename-layer/sort 等动作
+  - 修正错误选项：`calc --no-check-crs`、`proximity --output-nodata`、`select --field`（`--fields` 已废弃）、`set-field-type --input-field-type`、`vector info` 无 `--update`
+  - 修正失效示例：`vector rasterize` 新建栅格需 `--size`/`--resolution` 且不能用 `-b`；`vector select` 改用 `--field`
+  - 补全 pipeline 步骤表（as-features、contour、footprint、pixel-info、polygonize、shift-longitude、zonal-stats、grid、layer-algebra、rasterize、info-raster/info-vector、compare-vector 等）
+  - 补全 `gdal driver` 子命令（cog/gpkg/gti/openfilegdb/parquet/pdf/zarr/icechunk/rpftoc）与 `gdal mdim` 的 reproject/compare/pipeline
 
 ## 2026-09-09
 
